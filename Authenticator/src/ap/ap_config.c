@@ -12,15 +12,10 @@
 #include "crypto/sha1.h"
 #include "crypto/tls.h"
 #include "radius/radius_client.h"
-#include "common/ieee802_11_defs.h"
-#include "common/ieee802_1x_defs.h"
 #include "common/eapol_common.h"
-#include "common/dhcp.h"
-#include "eap_common/eap_wsc_common.h"
 #include "eap_server/eap.h"
 #include "wpa_auth.h"
 #include "sta_info.h"
-#include "airtime_policy.h"
 #include "ap_config.h"
 
 
@@ -53,44 +48,15 @@ void hostapd_config_defaults_bss(struct hostapd_bss_config *bss)
 	bss->logger_syslog = (unsigned int) -1;
 	bss->logger_stdout = (unsigned int) -1;
 
-	bss->auth_algs = WPA_AUTH_ALG_OPEN | WPA_AUTH_ALG_SHARED;
-
-	bss->wep_rekeying_period = 300;
-	/* use key0 in individual key and key1 in broadcast key */
-	bss->broadcast_key_idx_min = 1;
-	bss->broadcast_key_idx_max = 2;
-	bss->eap_reauth_period = 3600;
-
-	bss->wpa_group_rekey = 600;
-	bss->wpa_gmk_rekey = 86400;
-	bss->wpa_group_update_count = 4;
-	bss->wpa_pairwise_update_count = 4;
-	bss->wpa_disable_eapol_key_retries =
-		DEFAULT_WPA_DISABLE_EAPOL_KEY_RETRIES;
-	bss->wpa_key_mgmt = WPA_KEY_MGMT_PSK;
-	bss->wpa_pairwise = WPA_CIPHER_TKIP;
-	bss->wpa_group = WPA_CIPHER_TKIP;
-	bss->rsn_pairwise = 0;
-
 	bss->max_num_sta = MAX_STA_COUNT;
 
-	bss->dtim_period = 2;
-
 	bss->radius_server_auth_port = 1812;
-	bss->eap_sim_db_timeout = 1;
-	bss->eap_sim_id = 3;
-	bss->ap_max_inactivity = AP_MAX_INACTIVITY;
 	bss->eapol_version = EAPOL_VERSION;
 
 	bss->max_listen_interval = 65535;
 
 	bss->pwd_group = 19; /* ECC: GF(p=256) */
 
-#ifdef CONFIG_IEEE80211W
-	bss->assoc_sa_query_max_timeout = 1000;
-	bss->assoc_sa_query_retry_timeout = 201;
-	bss->group_mgmt_cipher = WPA_CIPHER_AES_128_CMAC;
-#endif /* CONFIG_IEEE80211W */
 #ifdef EAP_SERVER_FAST
 	 /* both anonymous and authenticated provisioning */
 	bss->eap_fast_prov = 3;
@@ -98,53 +64,12 @@ void hostapd_config_defaults_bss(struct hostapd_bss_config *bss)
 	bss->pac_key_refresh_time = 1 * 24 * 60 * 60;
 #endif /* EAP_SERVER_FAST */
 
-	/* Set to -1 as defaults depends on HT in setup */
-	bss->wmm_enabled = -1;
-
-#ifdef CONFIG_IEEE80211R_AP
-	bss->ft_over_ds = 1;
-	bss->rkh_pos_timeout = 86400;
-	bss->rkh_neg_timeout = 60;
-	bss->rkh_pull_timeout = 1000;
-	bss->rkh_pull_retries = 4;
-	bss->r0_key_lifetime = 1209600;
-#endif /* CONFIG_IEEE80211R_AP */
-
 	bss->radius_das_time_window = 300;
-
-	bss->sae_anti_clogging_threshold = 5;
-	bss->sae_sync = 5;
-
-	bss->gas_frag_limit = 1400;
-
-#ifdef CONFIG_FILS
-	dl_list_init(&bss->fils_realms);
-	bss->fils_hlp_wait_time = 30;
-	bss->dhcp_server_port = DHCP_SERVER_PORT;
-	bss->dhcp_relay_port = DHCP_SERVER_PORT;
-#endif /* CONFIG_FILS */
-
-	bss->broadcast_deauth = 1;
-
-#ifdef CONFIG_MBO
-	bss->mbo_cell_data_conn_pref = -1;
-#endif /* CONFIG_MBO */
 
 	/* Disable TLS v1.3 by default for now to avoid interoperability issue.
 	 * This can be enabled by default once the implementation has been fully
 	 * completed and tested with other implementations. */
 	bss->tls_flags = TLS_CONN_DISABLE_TLSv1_3;
-
-	bss->send_probe_response = 1;
-
-#ifdef CONFIG_HS20
-	bss->hs20_release = (HS20_VERSION >> 4) + 1;
-#endif /* CONFIG_HS20 */
-
-#ifdef CONFIG_MACSEC
-	bss->mka_priority = DEFAULT_PRIO_NOT_KEY_SERVER;
-	bss->macsec_port = 1;
-#endif /* CONFIG_MACSEC */
 
 	/* Default to strict CRL checking. */
 	bss->check_crl_strict = 1;
@@ -153,31 +78,8 @@ void hostapd_config_defaults_bss(struct hostapd_bss_config *bss)
 
 struct hostapd_config * hostapd_config_defaults(void)
 {
-#define ecw2cw(ecw) ((1 << (ecw)) - 1)
-
 	struct hostapd_config *conf;
 	struct hostapd_bss_config *bss;
-	const int aCWmin = 4, aCWmax = 10;
-	const struct hostapd_wmm_ac_params ac_bk =
-		{ aCWmin, aCWmax, 7, 0, 0 }; /* background traffic */
-	const struct hostapd_wmm_ac_params ac_be =
-		{ aCWmin, aCWmax, 3, 0, 0 }; /* best effort traffic */
-	const struct hostapd_wmm_ac_params ac_vi = /* video traffic */
-		{ aCWmin - 1, aCWmin, 2, 3008 / 32, 0 };
-	const struct hostapd_wmm_ac_params ac_vo = /* voice traffic */
-		{ aCWmin - 2, aCWmin - 1, 2, 1504 / 32, 0 };
-	const struct hostapd_tx_queue_params txq_bk =
-		{ 7, ecw2cw(aCWmin), ecw2cw(aCWmax), 0 };
-	const struct hostapd_tx_queue_params txq_be =
-		{ 3, ecw2cw(aCWmin), 4 * (ecw2cw(aCWmin) + 1) - 1, 0};
-	const struct hostapd_tx_queue_params txq_vi =
-		{ 1, (ecw2cw(aCWmin) + 1) / 2 - 1, ecw2cw(aCWmin), 30};
-	const struct hostapd_tx_queue_params txq_vo =
-		{ 1, (ecw2cw(aCWmin) + 1) / 4 - 1,
-		  (ecw2cw(aCWmin) + 1) / 2 - 1, 15};
-
-#undef ecw2cw
-
 	conf = os_zalloc(sizeof(*conf));
 	bss = os_zalloc(sizeof(*bss));
 	if (conf == NULL || bss == NULL) {
@@ -204,64 +106,6 @@ struct hostapd_config * hostapd_config_defaults(void)
 	}
 
 	hostapd_config_defaults_bss(bss);
-
-	conf->num_bss = 1;
-
-	conf->beacon_int = 100;
-	conf->rts_threshold = -2; /* use driver default: 2347 */
-	conf->fragm_threshold = -2; /* user driver default: 2346 */
-	/* Set to invalid value means do not add Power Constraint IE */
-	conf->local_pwr_constraint = -1;
-
-	conf->wmm_ac_params[0] = ac_be;
-	conf->wmm_ac_params[1] = ac_bk;
-	conf->wmm_ac_params[2] = ac_vi;
-	conf->wmm_ac_params[3] = ac_vo;
-
-	conf->tx_queue[0] = txq_vo;
-	conf->tx_queue[1] = txq_vi;
-	conf->tx_queue[2] = txq_be;
-	conf->tx_queue[3] = txq_bk;
-
-	conf->ht_capab = HT_CAP_INFO_SMPS_DISABLED;
-
-	conf->ap_table_max_size = 255;
-	conf->ap_table_expiration_time = 60;
-	conf->track_sta_max_age = 180;
-
-#ifdef CONFIG_TESTING_OPTIONS
-	conf->ignore_probe_probability = 0.0;
-	conf->ignore_auth_probability = 0.0;
-	conf->ignore_assoc_probability = 0.0;
-	conf->ignore_reassoc_probability = 0.0;
-	conf->corrupt_gtk_rekey_mic_probability = 0.0;
-	conf->ecsa_ie_only = 0;
-#endif /* CONFIG_TESTING_OPTIONS */
-
-	conf->acs = 0;
-	conf->acs_ch_list.num = 0;
-#ifdef CONFIG_ACS
-	conf->acs_num_scans = 5;
-#endif /* CONFIG_ACS */
-
-#ifdef CONFIG_IEEE80211AX
-	conf->he_op.he_rts_threshold = HE_OPERATION_RTS_THRESHOLD_MASK >>
-		HE_OPERATION_RTS_THRESHOLD_OFFSET;
-	/* Set default basic MCS/NSS set to single stream MCS 0-7 */
-	conf->he_op.he_basic_mcs_nss_set = 0xfffc;
-#endif /* CONFIG_IEEE80211AX */
-
-	/* The third octet of the country string uses an ASCII space character
-	 * by default to indicate that the regulations encompass all
-	 * environments for the current frequency band in the country. */
-	conf->country[2] = ' ';
-
-	conf->rssi_reject_assoc_rssi = 0;
-	conf->rssi_reject_assoc_timeout = 30;
-
-#ifdef CONFIG_AIRTIME_POLICY
-	conf->airtime_update_interval = AIRTIME_DEFAULT_UPDATE_INTERVAL;
-#endif /* CONFIG_AIRTIME_POLICY */
 
 	return conf;
 }

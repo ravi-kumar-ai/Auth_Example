@@ -1267,24 +1267,6 @@ static int hostapd_setup_bss(struct hostapd_data *hapd, int first)
 	}
 #endif /* CONFIG_NO_RADIUS */
 
-	if (hostapd_acl_init(hapd)) {
-		wpa_printf(MSG_ERROR, "ACL initialization failed.");
-		return -1;
-	}
-	if (hostapd_init_wps(hapd, conf))
-		return -1;
-
-#ifdef CONFIG_DPP
-	hapd->gas = gas_query_ap_init(hapd, hapd->msg_ctx);
-	if (!hapd->gas)
-		return -1;
-	if (hostapd_dpp_init(hapd))
-		return -1;
-#endif /* CONFIG_DPP */
-
-	if (authsrv_init(hapd) < 0)
-		return -1;
-
 	if (ieee802_1x_init(hapd)) {
 		wpa_printf(MSG_ERROR, "IEEE 802.1X initialization failed.");
 		return -1;

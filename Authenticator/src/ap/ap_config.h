@@ -281,19 +281,12 @@ struct hostapd_bss_config {
 
 	int max_num_sta; /* maximum number of STAs in station table */
 
-	int dtim_period;
 	unsigned int bss_load_update_period;
 	unsigned int chan_util_avg_period;
 
 	int ieee802_1x; /* use IEEE 802.1X */
 	int eapol_version;
-	int eap_server; /* Use internal EAP server instead of external
-			 * RADIUS server */
 	struct hostapd_eap_user *eap_user;
-	char *eap_user_sqlite;
-	char *eap_sim_db;
-	unsigned int eap_sim_db_timeout;
-	int eap_server_erp; /* Whether ERP is enabled on internal EAP server */
 	struct hostapd_ip_addr own_ip_addr;
 	char *nas_identifier;
 	struct hostapd_radius_servers *radius;
@@ -301,7 +294,6 @@ struct hostapd_bss_config {
 	int radius_request_cui;
 	struct hostapd_radius_attr *radius_auth_req_attr;
 	struct hostapd_radius_attr *radius_acct_req_attr;
-	char *radius_req_attr_sqlite;
 	int radius_das_port;
 	unsigned int radius_das_time_window;
 	int radius_das_require_event_timestamp;
@@ -310,24 +302,12 @@ struct hostapd_bss_config {
 	u8 *radius_das_shared_secret;
 	size_t radius_das_shared_secret_len;
 
-	struct hostapd_ssid ssid;
-
 	char *eap_req_id_text; /* optional displayable message sent with
 				* EAP Request-Identity */
 	size_t eap_req_id_text_len;
 	int eapol_key_index_workaround;
 
-	size_t default_wep_key_len;
-	int individual_wep_key_len;
-	int wep_rekeying_period;
 	int broadcast_key_idx_min, broadcast_key_idx_max;
-	int eap_reauth_period;
-	int erp_send_reauth_start;
-	char *erp_domain;
-
-	int ieee802_11f; /* use IEEE 802.11f (IAPP) */
-	char iapp_iface[IFNAMSIZ + 1]; /* interface used with IAPP broadcast
-					* frames */
 
 	enum macaddr_acl {
 		ACCEPT_UNLESS_DENIED = 0,
@@ -342,64 +322,14 @@ struct hostapd_bss_config {
 	int isolate;
 	int start_disabled;
 
-	int auth_algs; /* bitfield of allowed IEEE 802.11 authentication
-			* algorithms, WPA_AUTH_ALG_{OPEN,SHARED,LEAP} */
-
-	int wpa; /* bitfield of WPA_PROTO_WPA, WPA_PROTO_RSN */
-	int wpa_key_mgmt;
-#ifdef CONFIG_IEEE80211W
-	enum mfp_options ieee80211w;
-	int group_mgmt_cipher;
-	/* dot11AssociationSAQueryMaximumTimeout (in TUs) */
-	unsigned int assoc_sa_query_max_timeout;
-	/* dot11AssociationSAQueryRetryTimeout (in TUs) */
-	int assoc_sa_query_retry_timeout;
-#endif /* CONFIG_IEEE80211W */
-#ifdef CONFIG_OCV
-	int ocv; /* Operating Channel Validation */
-#endif /* CONFIG_OCV */
 	enum {
 		PSK_RADIUS_IGNORED = 0,
 		PSK_RADIUS_ACCEPTED = 1,
 		PSK_RADIUS_REQUIRED = 2
 	} wpa_psk_radius;
-	int wpa_pairwise;
-	int group_cipher; /* wpa_group value override from configuation */
-	int wpa_group;
-	int wpa_group_rekey;
-	int wpa_group_rekey_set;
-	int wpa_strict_rekey;
-	int wpa_gmk_rekey;
-	int wpa_ptk_rekey;
-	u32 wpa_group_update_count;
-	u32 wpa_pairwise_update_count;
-	int wpa_disable_eapol_key_retries;
-	int rsn_pairwise;
-	int rsn_preauth;
-	char *rsn_preauth_interfaces;
 
-#ifdef CONFIG_IEEE80211R_AP
-	/* IEEE 802.11r - Fast BSS Transition */
-	u8 mobility_domain[MOBILITY_DOMAIN_ID_LEN];
-	u8 r1_key_holder[FT_R1KH_ID_LEN];
-	u32 r0_key_lifetime; /* PMK-R0 lifetime seconds */
-	int rkh_pos_timeout;
-	int rkh_neg_timeout;
-	int rkh_pull_timeout; /* ms */
-	int rkh_pull_retries;
-	u32 reassociation_deadline;
-	struct ft_remote_r0kh *r0kh_list;
-	struct ft_remote_r1kh *r1kh_list;
-	int pmk_r1_push;
-	int ft_over_ds;
-	int ft_psk_generate_local;
-	int r1_max_key_lifetime;
-#endif /* CONFIG_IEEE80211R_AP */
 
 	char *ctrl_interface; /* directory for UNIX domain sockets */
-#ifndef CONFIG_NATIVE_WINDOWS
-	gid_t ctrl_interface_gid;
-#endif /* CONFIG_NATIVE_WINDOWS */
 	int ctrl_interface_gid_set;
 
 	char *ca_cert;
@@ -445,13 +375,6 @@ struct hostapd_bss_config {
 				 * (for driver_wired.c).
 				 */
 
-	int ap_max_inactivity;
-	int ignore_broadcast_ssid;
-	int no_probe_resp_if_max_sta;
-
-	int wmm_enabled;
-	int wmm_uapsd;
-
 	struct hostapd_vlan *vlan;
 
 	macaddr bssid;
@@ -463,61 +386,8 @@ struct hostapd_bss_config {
 	 */
 	u16 max_listen_interval;
 
-	int disable_pmksa_caching;
-	int okc; /* Opportunistic Key Caching */
-
-	int wps_state;
-#ifdef CONFIG_WPS
-	int wps_independent;
-	int ap_setup_locked;
-	u8 uuid[16];
-	char *wps_pin_requests;
-	char *device_name;
-	char *manufacturer;
-	char *model_name;
-	char *model_number;
-	char *serial_number;
-	u8 device_type[WPS_DEV_TYPE_LEN];
-	char *config_methods;
-	u8 os_version[4];
-	char *ap_pin;
-	int skip_cred_build;
-	u8 *extra_cred;
-	size_t extra_cred_len;
-	int wps_cred_processing;
-	int wps_cred_add_sae;
-	int force_per_enrollee_psk;
-	u8 *ap_settings;
-	size_t ap_settings_len;
-	struct hostapd_ssid multi_ap_backhaul_ssid;
-	char *upnp_iface;
-	char *friendly_name;
-	char *manufacturer_url;
-	char *model_description;
-	char *model_url;
-	char *upc;
-	struct wpabuf *wps_vendor_ext[MAX_WPS_VENDOR_EXTENSIONS];
-	int wps_nfc_pw_from_config;
-	int wps_nfc_dev_pw_id;
-	struct wpabuf *wps_nfc_dh_pubkey;
-	struct wpabuf *wps_nfc_dh_privkey;
-	struct wpabuf *wps_nfc_dev_pw;
-#endif /* CONFIG_WPS */
 	int pbc_in_m1;
 	char *server_id;
-
-#define P2P_ENABLED BIT(0)
-#define P2P_GROUP_OWNER BIT(1)
-#define P2P_GROUP_FORMATION BIT(2)
-#define P2P_MANAGE BIT(3)
-#define P2P_ALLOW_CROSS_CONNECTION BIT(4)
-	int p2p;
-#ifdef CONFIG_P2P
-	u8 ip_addr_go[4];
-	u8 ip_addr_mask[4];
-	u8 ip_addr_start[4];
-	u8 ip_addr_end[4];
-#endif /* CONFIG_P2P */
 
 	int disassoc_low_ack;
 	int skip_inactivity_poll;
@@ -525,121 +395,18 @@ struct hostapd_bss_config {
 #define TDLS_PROHIBIT BIT(0)
 #define TDLS_PROHIBIT_CHAN_SWITCH BIT(1)
 	int tdls;
-	int disable_11n;
-	int disable_11ac;
 
-	/* IEEE 802.11v */
-	int time_advertisement;
-	char *time_zone;
-	int wnm_sleep_mode;
-	int wnm_sleep_mode_no_keys;
-	int bss_transition;
-
-	/* IEEE 802.11u - Interworking */
-	int interworking;
-	int access_network_type;
-	int internet;
-	int asra;
-	int esr;
-	int uesa;
-	int venue_info_set;
-	u8 venue_group;
-	u8 venue_type;
-	u8 hessid[ETH_ALEN];
-
-	/* IEEE 802.11u - Roaming Consortium list */
-	unsigned int roaming_consortium_count;
-	struct hostapd_roaming_consortium *roaming_consortium;
-
-	/* IEEE 802.11u - Venue Name duples */
-	unsigned int venue_name_count;
-	struct hostapd_lang_string *venue_name;
 
 	/* Venue URL duples */
 	unsigned int venue_url_count;
 	struct hostapd_venue_url *venue_url;
 
-	/* IEEE 802.11u - Network Authentication Type */
-	u8 *network_auth_type;
-	size_t network_auth_type_len;
-
-	/* IEEE 802.11u - IP Address Type Availability */
-	u8 ipaddr_type_availability;
-	u8 ipaddr_type_configured;
-
-	/* IEEE 802.11u - 3GPP Cellular Network */
-	u8 *anqp_3gpp_cell_net;
-	size_t anqp_3gpp_cell_net_len;
-
-	/* IEEE 802.11u - Domain Name */
-	u8 *domain_name;
-	size_t domain_name_len;
 
 	unsigned int nai_realm_count;
 	struct hostapd_nai_realm_data *nai_realm_data;
 
-	struct dl_list anqp_elem; /* list of struct anqp_element */
-
-	u16 gas_comeback_delay;
-	size_t gas_frag_limit;
-	int gas_address3;
-
-	u8 qos_map_set[16 + 2 * 21];
-	unsigned int qos_map_set_len;
-
-	int osen;
-	int proxy_arp;
 	int na_mcast_to_ucast;
 
-#ifdef CONFIG_HS20
-	int hs20;
-	int hs20_release;
-	int disable_dgaf;
-	u16 anqp_domain_id;
-	unsigned int hs20_oper_friendly_name_count;
-	struct hostapd_lang_string *hs20_oper_friendly_name;
-	u8 *hs20_wan_metrics;
-	u8 *hs20_connection_capability;
-	size_t hs20_connection_capability_len;
-	u8 *hs20_operating_class;
-	u8 hs20_operating_class_len;
-	struct hs20_icon {
-		u16 width;
-		u16 height;
-		char language[3];
-		char type[256];
-		char name[256];
-		char file[256];
-	} *hs20_icons;
-	size_t hs20_icons_count;
-	u8 osu_ssid[SSID_MAX_LEN];
-	size_t osu_ssid_len;
-	struct hs20_osu_provider {
-		unsigned int friendly_name_count;
-		struct hostapd_lang_string *friendly_name;
-		char *server_uri;
-		int *method_list;
-		char **icons;
-		size_t icons_count;
-		char *osu_nai;
-		char *osu_nai2;
-		unsigned int service_desc_count;
-		struct hostapd_lang_string *service_desc;
-	} *hs20_osu_providers, *last_osu;
-	size_t hs20_osu_providers_count;
-	size_t hs20_osu_providers_nai_count;
-	char **hs20_operator_icon;
-	size_t hs20_operator_icon_count;
-	unsigned int hs20_deauth_req_timeout;
-	char *subscr_remediation_url;
-	u8 subscr_remediation_method;
-	char *hs20_sim_provisioning_url;
-	char *t_c_filename;
-	u32 t_c_timestamp;
-	char *t_c_server_url;
-#endif /* CONFIG_HS20 */
-
-	u8 wps_rf_bands; /* RF bands for WPS (WPS_RF_*) */
 
 #ifdef CONFIG_RADIUS_TEST
 	char *dump_msk_file;
@@ -647,14 +414,6 @@ struct hostapd_bss_config {
 
 	struct wpabuf *vendor_elements;
 	struct wpabuf *assocresp_elements;
-
-	unsigned int sae_anti_clogging_threshold;
-	unsigned int sae_sync;
-	int sae_require_mfp;
-	int *sae_groups;
-	struct sae_password_entry *sae_passwords;
-
-	char *wowlan_triggers; /* Wake-on-WLAN triggers */
 
 #ifdef CONFIG_TESTING_OPTIONS
 	u8 bss_load_test[5];
@@ -664,169 +423,11 @@ struct hostapd_bss_config {
 	struct wpabuf *sae_commit_override;
 #endif /* CONFIG_TESTING_OPTIONS */
 
-#define MESH_ENABLED BIT(0)
-	int mesh;
-
-	u8 radio_measurements[RRM_CAPABILITIES_IE_LEN];
-
-	int vendor_vht;
-	int use_sta_nsts;
-
-	char *no_probe_resp_if_seen_on;
-	char *no_auth_if_seen_on;
-
 	int pbss;
-
-#ifdef CONFIG_MBO
-	int mbo_enabled;
-	/**
-	 * oce - Enable OCE in AP and/or STA-CFON mode
-	 *  - BIT(0) is Reserved
-	 *  - Set BIT(1) to enable OCE in STA-CFON mode
-	 *  - Set BIT(2) to enable OCE in AP mode
-	 */
-	unsigned int oce;
-	int mbo_cell_data_conn_pref;
-#endif /* CONFIG_MBO */
-
-	int ftm_responder;
-	int ftm_initiator;
-
-#ifdef CONFIG_FILS
-	u8 fils_cache_id[FILS_CACHE_ID_LEN];
-	int fils_cache_id_set;
-	struct dl_list fils_realms; /* list of struct fils_realm */
-	int fils_dh_group;
-	struct hostapd_ip_addr dhcp_server;
-	int dhcp_rapid_commit_proxy;
-	unsigned int fils_hlp_wait_time;
-	u16 dhcp_server_port;
-	u16 dhcp_relay_port;
-#endif /* CONFIG_FILS */
 
 	int multicast_to_unicast;
 
 	int broadcast_deauth;
-
-#ifdef CONFIG_DPP
-	char *dpp_connector;
-	struct wpabuf *dpp_netaccesskey;
-	unsigned int dpp_netaccesskey_expiry;
-	struct wpabuf *dpp_csign;
-#ifdef CONFIG_DPP2
-	struct dpp_controller_conf *dpp_controller;
-#endif /* CONFIG_DPP2 */
-#endif /* CONFIG_DPP */
-
-#ifdef CONFIG_OWE
-	macaddr owe_transition_bssid;
-	u8 owe_transition_ssid[SSID_MAX_LEN];
-	size_t owe_transition_ssid_len;
-	char owe_transition_ifname[IFNAMSIZ + 1];
-	int *owe_groups;
-#endif /* CONFIG_OWE */
-
-	int coloc_intf_reporting;
-
-	u8 send_probe_response;
-
-#define BACKHAUL_BSS 1
-#define FRONTHAUL_BSS 2
-	int multi_ap; /* bitmap of BACKHAUL_BSS, FRONTHAUL_BSS */
-
-#ifdef CONFIG_AIRTIME_POLICY
-	unsigned int airtime_weight;
-	int airtime_limit;
-	struct airtime_sta_weight *airtime_weight_list;
-#endif /* CONFIG_AIRTIME_POLICY */
-
-#ifdef CONFIG_MACSEC
-	/**
-	 * macsec_policy - Determines the policy for MACsec secure session
-	 *
-	 * 0: MACsec not in use (default)
-	 * 1: MACsec enabled - Should secure, accept key server's advice to
-	 *    determine whether to use a secure session or not.
-	 */
-	int macsec_policy;
-
-	/**
-	 * macsec_integ_only - Determines how MACsec are transmitted
-	 *
-	 * This setting applies only when MACsec is in use, i.e.,
-	 *  - macsec_policy is enabled
-	 *  - the key server has decided to enable MACsec
-	 *
-	 * 0: Encrypt traffic (default)
-	 * 1: Integrity only
-	 */
-	int macsec_integ_only;
-
-	/**
-	 * macsec_replay_protect - Enable MACsec replay protection
-	 *
-	 * This setting applies only when MACsec is in use, i.e.,
-	 *  - macsec_policy is enabled
-	 *  - the key server has decided to enable MACsec
-	 *
-	 * 0: Replay protection disabled (default)
-	 * 1: Replay protection enabled
-	 */
-	int macsec_replay_protect;
-
-	/**
-	 * macsec_replay_window - MACsec replay protection window
-	 *
-	 * A window in which replay is tolerated, to allow receipt of frames
-	 * that have been misordered by the network.
-	 *
-	 * This setting applies only when MACsec replay protection active, i.e.,
-	 *  - macsec_replay_protect is enabled
-	 *  - the key server has decided to enable MACsec
-	 *
-	 * 0: No replay window, strict check (default)
-	 * 1..2^32-1: number of packets that could be misordered
-	 */
-	u32 macsec_replay_window;
-
-	/**
-	 * macsec_port - MACsec port (in SCI)
-	 *
-	 * Port component of the SCI.
-	 *
-	 * Range: 1-65534 (default: 1)
-	 */
-	int macsec_port;
-
-	/**
-	 * mka_priority - Priority of MKA Actor
-	 *
-	 * Range: 0-255 (default: 255)
-	 */
-	int mka_priority;
-
-	/**
-	 * mka_ckn - MKA pre-shared CKN
-	 */
-#define MACSEC_CKN_MAX_LEN 32
-	size_t mka_ckn_len;
-	u8 mka_ckn[MACSEC_CKN_MAX_LEN];
-
-	/**
-	 * mka_cak - MKA pre-shared CAK
-	 */
-#define MACSEC_CAK_MAX_LEN 32
-	size_t mka_cak_len;
-	u8 mka_cak[MACSEC_CAK_MAX_LEN];
-
-#define MKA_PSK_SET_CKN BIT(0)
-#define MKA_PSK_SET_CAK BIT(1)
-#define MKA_PSK_SET (MKA_PSK_SET_CKN | MKA_PSK_SET_CAK)
-	/**
-	 * mka_psk_set - Whether mka_ckn and mka_cak are set
-	 */
-	u8 mka_psk_set;
-#endif /* CONFIG_MACSEC */
 };
 
 /**
@@ -868,24 +469,6 @@ struct hostapd_config {
 	struct hostapd_bss_config **bss, *last_bss;
 	size_t num_bss;
 
-	u16 beacon_int;
-	int rts_threshold;
-	int fragm_threshold;
-	u8 channel;
-	u8 acs;
-	struct wpa_freq_range_list acs_ch_list;
-	int acs_exclude_dfs;
-	enum hostapd_hw_mode hw_mode; /* HOSTAPD_MODE_IEEE80211A, .. */
-	enum {
-		LONG_PREAMBLE = 0,
-		SHORT_PREAMBLE = 1
-	} preamble;
-
-	int *supported_rates;
-	int *basic_rates;
-	unsigned int beacon_rate;
-	enum beacon_rate_type rate_type;
-
 	const struct wpa_driver_ops *driver;
 	char *driver_params;
 
@@ -895,119 +478,12 @@ struct hostapd_config {
 	unsigned int track_sta_max_num;
 	unsigned int track_sta_max_age;
 
-	char country[3]; /* first two octets: country code as described in
-			  * ISO/IEC 3166-1. Third octet:
-			  * ' ' (ascii 32): all environments
-			  * 'O': Outdoor environemnt only
-			  * 'I': Indoor environment only
-			  * 'X': Used with noncountry entity ("XXX")
-			  * 0x00..0x31: identifying IEEE 802.11 standard
-			  *	Annex E table (0x04 = global table)
-			  */
-
-	int ieee80211d;
-
-	int ieee80211h; /* DFS */
-
-	/*
-	 * Local power constraint is an octet encoded as an unsigned integer in
-	 * units of decibels. Invalid value -1 indicates that Power Constraint
-	 * element will not be added.
-	 */
-	int local_pwr_constraint;
-
-	/* Control Spectrum Management bit */
-	int spectrum_mgmt_required;
-
 	struct hostapd_tx_queue_params tx_queue[NUM_TX_QUEUES];
 
-	/*
-	 * WMM AC parameters, in same order as 802.1D, i.e.
-	 * 0 = BE (best effort)
-	 * 1 = BK (background)
-	 * 2 = VI (video)
-	 * 3 = VO (voice)
-	 */
-	struct hostapd_wmm_ac_params wmm_ac_params[4];
-
-	int ht_op_mode_fixed;
-	u16 ht_capab;
-	int ieee80211n;
-	int secondary_channel;
-	int no_pri_sec_switch;
-	int require_ht;
-	int obss_interval;
-	u32 vht_capab;
-	int ieee80211ac;
-	int require_vht;
-	u8 vht_oper_chwidth;
-	u8 vht_oper_centr_freq_seg0_idx;
-	u8 vht_oper_centr_freq_seg1_idx;
-	u8 ht40_plus_minus_allowed;
-
-	/* Use driver-generated interface addresses when adding multiple BSSs */
-	u8 use_driver_iface_addr;
-
-#ifdef CONFIG_FST
-	struct fst_iface_cfg fst_cfg;
-#endif /* CONFIG_FST */
-
-#ifdef CONFIG_P2P
-	u8 p2p_go_ctwindow;
-#endif /* CONFIG_P2P */
-
-#ifdef CONFIG_TESTING_OPTIONS
-	double ignore_probe_probability;
-	double ignore_auth_probability;
-	double ignore_assoc_probability;
-	double ignore_reassoc_probability;
-	double corrupt_gtk_rekey_mic_probability;
-	int ecsa_ie_only;
-#endif /* CONFIG_TESTING_OPTIONS */
-
-#ifdef CONFIG_ACS
-	unsigned int acs_num_scans;
-	struct acs_bias {
-		int channel;
-		double bias;
-	} *acs_chan_bias;
-	unsigned int num_acs_chan_bias;
-#endif /* CONFIG_ACS */
 
 	struct wpabuf *lci;
 	struct wpabuf *civic;
 	int stationary_ap;
-
-	int ieee80211ax;
-#ifdef CONFIG_IEEE80211AX
-	struct he_phy_capabilities_info he_phy_capab;
-	struct he_operation he_op;
-	struct ieee80211_he_mu_edca_parameter_set he_mu_edca;
-	struct spatial_reuse spr;
-	u8 he_oper_chwidth;
-	u8 he_oper_centr_freq_seg0_idx;
-	u8 he_oper_centr_freq_seg1_idx;
-#endif /* CONFIG_IEEE80211AX */
-
-	/* VHT enable/disable config from CHAN_SWITCH */
-#define CH_SWITCH_VHT_ENABLED BIT(0)
-#define CH_SWITCH_VHT_DISABLED BIT(1)
-	unsigned int ch_switch_vht_config;
-
-	int rssi_reject_assoc_rssi;
-	int rssi_reject_assoc_timeout;
-
-#ifdef CONFIG_AIRTIME_POLICY
-	enum {
-		AIRTIME_MODE_OFF = 0,
-		AIRTIME_MODE_STATIC = 1,
-		AIRTIME_MODE_DYNAMIC = 2,
-		AIRTIME_MODE_LIMIT = 3,
-		__AIRTIME_MODE_MAX,
-	} airtime_mode;
-	unsigned int airtime_update_interval;
-#define AIRTIME_MODE_MAX (__AIRTIME_MODE_MAX - 1)
-#endif /* CONFIG_AIRTIME_POLICY */
 };
 
 
